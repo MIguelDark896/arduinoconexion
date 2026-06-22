@@ -154,8 +154,10 @@ function Index() {
             <Car3D
               word={message}
               launching={launching}
+              motor={motor}
               onLaunchComplete={handleLaunchComplete}
             />
+
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               Cargando escena 3D…
