@@ -9,6 +9,7 @@ import {
   Usb,
   Wifi,
   WifiOff,
+  ChevronUp,
   ChevronDown,
   Square,
   Bluetooth,
