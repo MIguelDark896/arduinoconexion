@@ -12,12 +12,11 @@ import {
   ChevronUp,
   ChevronDown,
   Square,
-  Bluetooth,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import Car3D, { type MotorState } from "@/components/Car3D";
-import { useBluetooth } from "@/lib/useBluetooth";
+import { useSerial } from "@/lib/useSerial";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -50,7 +49,7 @@ function Index() {
   const [mode, setMode] = useState<Mode>("demo");
   const [motor, setMotor] = useState<MotorState>("stop");
 
-  const bluetooth = useBluetooth();
+  const serial = useSerial();
 
   useEffect(() => setMounted(true), []);
 
@@ -59,16 +58,16 @@ function Index() {
   async function handleMotor(state: MotorState) {
     setMotor(state);
     if (mode === "real") {
-      if (!bluetooth.connected) {
-        const ok = await bluetooth.connect();
+      if (!serial.connected) {
+        const ok = await serial.connect();
         if (!ok) {
-          toast.error(bluetooth.error ?? "No se pudo conectar al carro.");
+          toast.error(serial.error ?? "No se pudo conectar al carro.");
           return;
         }
       }
       const cmd = state === "forward" ? "F" : state === "backward" ? "B" : "S";
-      const sent = await bluetooth.sendCommand(cmd);
-      if (!sent) toast.error(bluetooth.error ?? "Error al enviar el comando.");
+      const sent = await serial.sendCommand(cmd);
+      if (!sent) toast.error(serial.error ?? "Error al enviar el comando.");
     }
   }
 
@@ -83,16 +82,16 @@ function Index() {
     setLaunching(false);
 
     if (mode === "real") {
-      if (!bluetooth.connected) {
-        const ok = await bluetooth.connect();
+      if (!serial.connected) {
+        const ok = await serial.connect();
         if (!ok) {
-          toast.error(bluetooth.error ?? "No se pudo conectar al carro.");
+          toast.error(serial.error ?? "No se pudo conectar al carro.");
           return;
         }
       }
-      const sent = await bluetooth.send(value.toUpperCase().slice(0, 16));
+      const sent = await serial.send(value.toUpperCase().slice(0, 16));
       if (sent) toast.success("Mensaje enviado al carro real 🚗");
-      else toast.error(bluetooth.error ?? "Error al enviar.");
+      else toast.error(serial.error ?? "Error al enviar.");
     } else {
       toast.success("Mensaje cargado en la pantalla (modo demo).");
     }
@@ -273,7 +272,7 @@ function Index() {
               Modo de funcionamiento
             </span>
             {mode === "real" ? (
-              bluetooth.connected ? (
+              serial.connected ? (
                 <span className="flex items-center gap-1 text-xs text-primary">
                   <Wifi className="h-3.5 w-3.5" /> Conectado
                 </span>
@@ -304,7 +303,7 @@ function Index() {
                   : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Bluetooth className="h-4 w-4" />
+              <Usb className="h-4 w-4" />
               Real
             </button>
           </div>
@@ -312,17 +311,17 @@ function Index() {
           <p className="mt-3 text-xs text-muted-foreground">
             {mode === "demo"
               ? "Modo demo: todo ocurre en la simulación 3D, sin hardware."
-              : "Modo real: al enviar, conecta tu Arduino por Bluetooth y manda la palabra a la pantalla QAPASS. Requiere Chrome o Edge."}
+              : "Modo real: al enviar, conecta tu Arduino por USB y manda la palabra a la pantalla QAPASS (9600 baudios). Requiere Chrome o Edge."}
           </p>
 
           {mode === "real" && (
             <button
               onClick={() =>
-                bluetooth.connected ? bluetooth.disconnect() : bluetooth.connect()
+                serial.connected ? serial.disconnect() : serial.connect()
               }
               className="mt-3 w-full rounded-xl border border-accent/60 px-4 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/10"
             >
-              {bluetooth.connected ? "Desconectar carro" : "Conectar carro (Bluetooth)"}
+              {serial.connected ? "Desconectar carro" : "Conectar carro (USB)"}
             </button>
           )}
         </div>

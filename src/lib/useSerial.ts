@@ -34,7 +34,7 @@ function getBluetooth(): Bluetooth | null {
   return nav.bluetooth ?? null;
 }
 
-export function useBluetooth() {
+export function useSerial() {
   const deviceRef = useRef<BluetoothDevice | null>(null);
   const characteristicRef =
     useRef<BluetoothRemoteGATTCharacteristic | null>(null);
