@@ -98,5 +98,5 @@ export function useSerial() {
     setConnected(false);
   }, []);
 
-  return { supported, connected, error, connect, send, disconnect };
+  return { supported, connected, error, connect, send, sendCommand, disconnect };
 }
