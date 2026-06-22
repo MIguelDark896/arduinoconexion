@@ -1,9 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Send, Copy, Check, Rocket, Car, Usb, Wifi, WifiOff } from "lucide-react";
+import {
+  Send,
+  Copy,
+  Check,
+  Rocket,
+  Car,
+  Usb,
+  Wifi,
+  WifiOff,
+  ChevronUp,
+  ChevronDown,
+  Square,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import Car3D from "@/components/Car3D";
+import Car3D, { type MotorState } from "@/components/Car3D";
 import { useSerial } from "@/lib/useSerial";
 
 export const Route = createFileRoute("/")({
@@ -35,12 +47,30 @@ function Index() {
   const [launching, setLaunching] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState<Mode>("demo");
+  const [motor, setMotor] = useState<MotorState>("stop");
 
   const serial = useSerial();
 
   useEffect(() => setMounted(true), []);
 
   const message = word.toUpperCase().slice(0, 16);
+
+  async function handleMotor(state: MotorState) {
+    setMotor(state);
+    if (mode === "real") {
+      if (!serial.connected) {
+        const ok = await serial.connect();
+        if (!ok) {
+          toast.error(serial.error ?? "No se pudo conectar al carro.");
+          return;
+        }
+      }
+      const cmd = state === "forward" ? "F" : state === "backward" ? "B" : "S";
+      const sent = await serial.sendCommand(cmd);
+      if (!sent) toast.error(serial.error ?? "Error al enviar el comando.");
+    }
+  }
+
 
   async function handleSend() {
     const value = draft.trim();
