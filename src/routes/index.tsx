@@ -221,6 +221,49 @@ function Index() {
           </button>
         </div>
 
+        {/* Motor control */}
+        <div className="rounded-2xl border border-border bg-card/40 p-4 backdrop-blur">
+          <span className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Control del motor {mode === "real" ? "(envía al Arduino)" : "(simulación)"}
+          </span>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => handleMotor("forward")}
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-3 py-3 text-xs font-bold uppercase tracking-wider transition ${
+                motor === "forward"
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <ChevronUp className="h-5 w-5" />
+              Adelante
+            </button>
+            <button
+              onClick={() => handleMotor("stop")}
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-3 py-3 text-xs font-bold uppercase tracking-wider transition ${
+                motor === "stop"
+                  ? "border-accent bg-accent/15 text-accent"
+                  : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Square className="h-5 w-5" />
+              Parar
+            </button>
+            <button
+              onClick={() => handleMotor("backward")}
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-3 py-3 text-xs font-bold uppercase tracking-wider transition ${
+                motor === "backward"
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <ChevronDown className="h-5 w-5" />
+              Atrás
+            </button>
+          </div>
+        </div>
+
+
         {/* Mode switch */}
         <div className="mt-2 rounded-2xl border border-border bg-card/40 p-4 backdrop-blur">
           <div className="mb-3 flex items-center justify-between">
