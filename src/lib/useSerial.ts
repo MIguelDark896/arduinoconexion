@@ -59,20 +59,32 @@ export function useSerial() {
     }
   }, []);
 
-  const send = useCallback(async (message: string) => {
+  const writeLine = useCallback(async (line: string) => {
     if (!writerRef.current) {
       setError("No hay un carro conectado.");
       return false;
     }
     try {
-      const data = new TextEncoder().encode(message + "\n");
+      const data = new TextEncoder().encode(line + "\n");
       await writerRef.current.write(data);
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al enviar el mensaje.");
+      setError(e instanceof Error ? e.message : "Error al enviar.");
       return false;
     }
   }, []);
+
+  // Send a text message to the LCD. Protocol: "MSG:<text>"
+  const send = useCallback(
+    (message: string) => writeLine("MSG:" + message),
+    [writeLine],
+  );
+
+  // Send a motor command. Protocol: "F" forward, "B" backward, "S" stop
+  const sendCommand = useCallback(
+    (cmd: "F" | "B" | "S") => writeLine("CMD:" + cmd),
+    [writeLine],
+  );
 
   const disconnect = useCallback(async () => {
     try {
@@ -86,5 +98,5 @@ export function useSerial() {
     setConnected(false);
   }, []);
 
-  return { supported, connected, error, connect, send, disconnect };
+  return { supported, connected, error, connect, send, sendCommand, disconnect };
 }

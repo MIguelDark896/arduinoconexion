@@ -1,9 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Send, Copy, Check, Rocket, Car, Usb, Wifi, WifiOff } from "lucide-react";
+import {
+  Send,
+  Copy,
+  Check,
+  Rocket,
+  Car,
+  Usb,
+  Wifi,
+  WifiOff,
+  ChevronUp,
+  ChevronDown,
+  Square,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import Car3D from "@/components/Car3D";
+import Car3D, { type MotorState } from "@/components/Car3D";
 import { useSerial } from "@/lib/useSerial";
 
 export const Route = createFileRoute("/")({
@@ -35,12 +47,30 @@ function Index() {
   const [launching, setLaunching] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState<Mode>("demo");
+  const [motor, setMotor] = useState<MotorState>("stop");
 
   const serial = useSerial();
 
   useEffect(() => setMounted(true), []);
 
   const message = word.toUpperCase().slice(0, 16);
+
+  async function handleMotor(state: MotorState) {
+    setMotor(state);
+    if (mode === "real") {
+      if (!serial.connected) {
+        const ok = await serial.connect();
+        if (!ok) {
+          toast.error(serial.error ?? "No se pudo conectar al carro.");
+          return;
+        }
+      }
+      const cmd = state === "forward" ? "F" : state === "backward" ? "B" : "S";
+      const sent = await serial.sendCommand(cmd);
+      if (!sent) toast.error(serial.error ?? "Error al enviar el comando.");
+    }
+  }
+
 
   async function handleSend() {
     const value = draft.trim();
@@ -124,8 +154,10 @@ function Index() {
             <Car3D
               word={message}
               launching={launching}
+              motor={motor}
               onLaunchComplete={handleLaunchComplete}
             />
+
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               Cargando escena 3D…
@@ -188,6 +220,49 @@ function Index() {
             {launching ? "Carro en marcha…" : "Activar carro"}
           </button>
         </div>
+
+        {/* Motor control */}
+        <div className="rounded-2xl border border-border bg-card/40 p-4 backdrop-blur">
+          <span className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Control del motor {mode === "real" ? "(envía al Arduino)" : "(simulación)"}
+          </span>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => handleMotor("forward")}
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-3 py-3 text-xs font-bold uppercase tracking-wider transition ${
+                motor === "forward"
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <ChevronUp className="h-5 w-5" />
+              Adelante
+            </button>
+            <button
+              onClick={() => handleMotor("stop")}
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-3 py-3 text-xs font-bold uppercase tracking-wider transition ${
+                motor === "stop"
+                  ? "border-accent bg-accent/15 text-accent"
+                  : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Square className="h-5 w-5" />
+              Parar
+            </button>
+            <button
+              onClick={() => handleMotor("backward")}
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-3 py-3 text-xs font-bold uppercase tracking-wider transition ${
+                motor === "backward"
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <ChevronDown className="h-5 w-5" />
+              Atrás
+            </button>
+          </div>
+        </div>
+
 
         {/* Mode switch */}
         <div className="mt-2 rounded-2xl border border-border bg-card/40 p-4 backdrop-blur">
