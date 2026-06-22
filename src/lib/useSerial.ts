@@ -25,7 +25,7 @@ export function useSerial() {
       return false;
     }
     try {
-      const port = await (navigator as Navigator).serial.requestPort();
+      const port = await navigator.serial.requestPort();
       await port.open({ baudRate: 9600 });
       portRef.current = port;
       const writer = port.writable?.getWriter() ?? null;
