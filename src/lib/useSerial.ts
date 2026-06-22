@@ -1,31 +1,49 @@
 import { useCallback, useRef, useState } from "react";
 
 /**
+ * Minimal Web Serial typings (self-contained so the build never depends on
+ * ambient DOM serial types being present).
+ */
+interface SerialPortLike {
+  open(options: { baudRate: number }): Promise<void>;
+  close(): Promise<void>;
+  readonly writable: WritableStream<Uint8Array> | null;
+}
+interface SerialLike {
+  requestPort(): Promise<SerialPortLike>;
+}
+function getSerial(): SerialLike | null {
+  if (typeof navigator === "undefined") return null;
+  const nav = navigator as unknown as { serial?: SerialLike };
+  return nav.serial ?? null;
+}
+
+/**
  * Hook to talk to an Arduino over USB using the Web Serial API.
  * Works in Chrome/Edge over HTTPS. Sends a line of text the Arduino
  * can read with Serial.readStringUntil('\n') and print on the QAPASS LCD.
  */
 export function useSerial() {
-  const portRef = useRef<SerialPort | null>(null);
+  const portRef = useRef<SerialPortLike | null>(null);
   const writerRef = useRef<WritableStreamDefaultWriter<Uint8Array> | null>(
     null,
   );
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const supported =
-    typeof navigator !== "undefined" && "serial" in navigator;
+  const supported = getSerial() !== null;
 
   const connect = useCallback(async () => {
     setError(null);
-    if (!supported) {
+    const serial = getSerial();
+    if (!serial) {
       setError(
         "Tu navegador no soporta Web Serial. Usa Chrome o Edge en escritorio.",
       );
       return false;
     }
     try {
-      const port = await navigator.serial.requestPort();
+      const port = await serial.requestPort();
       await port.open({ baudRate: 9600 });
       portRef.current = port;
       const writer = port.writable?.getWriter() ?? null;
@@ -39,7 +57,7 @@ export function useSerial() {
       setConnected(false);
       return false;
     }
-  }, [supported]);
+  }, []);
 
   const send = useCallback(async (message: string) => {
     if (!writerRef.current) {
