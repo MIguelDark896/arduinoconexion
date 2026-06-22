@@ -316,9 +316,16 @@ function Index() {
 
           {mode === "real" && (
             <button
-              onClick={() =>
-                serial.connected ? serial.disconnect() : serial.connect()
-              }
+              onClick={async () => {
+                if (serial.connected) {
+                  serial.disconnect();
+                } else {
+                  const ok = await serial.connect();
+                  if (!ok) {
+                    toast.error(serial.error ?? "No se pudo conectar al carro.");
+                  }
+                }
+              }}
               className="mt-3 w-full rounded-xl border border-accent/60 px-4 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/10"
             >
               {serial.connected ? "Desconectar carro" : "Conectar carro (USB)"}
