@@ -12,6 +12,10 @@ import {
   ChevronUp,
   ChevronDown,
   Square,
+  Terminal,
+  Trash2,
+  AlertTriangle,
+  Unplug,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
