@@ -12,6 +12,10 @@ import {
   ChevronUp,
   ChevronDown,
   Square,
+  Terminal,
+  Trash2,
+  AlertTriangle,
+  Unplug,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -116,6 +120,17 @@ function Index() {
 
   function handleLaunchComplete() {
     // car has disappeared; nothing else needed
+  }
+
+  async function handleConnect() {
+    if (serial.connected) {
+      await serial.disconnect();
+      toast("Arduino desconectado.");
+      return;
+    }
+    const ok = await serial.connect();
+    if (ok) toast.success("Arduino conectado por USB 🔌");
+    else toast.error(serial.error ?? "No se pudo conectar al Arduino.");
   }
 
   return (
@@ -274,7 +289,7 @@ function Index() {
             {mode === "real" ? (
               serial.connected ? (
                 <span className="flex items-center gap-1 text-xs text-primary">
-                  <Wifi className="h-3.5 w-3.5" /> Conectado
+                  <Wifi className="h-3.5 w-3.5" /> Conectado por USB
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -311,27 +326,89 @@ function Index() {
           <p className="mt-3 text-xs text-muted-foreground">
             {mode === "demo"
               ? "Modo demo: todo ocurre en la simulación 3D, sin hardware."
-              : "Modo real: al enviar, conecta tu Arduino por USB y manda la palabra a la pantalla QAPASS (9600 baudios). Requiere Chrome o Edge."}
+              : "Modo real: conecta tu Arduino Uno por cable USB y envía la palabra a la pantalla QAPASS (9600 baudios). Requiere Chrome o Edge de escritorio."}
           </p>
 
           {mode === "real" && (
-            <button
-              onClick={async () => {
-                if (serial.connected) {
-                  serial.disconnect();
-                } else {
-                  const ok = await serial.connect();
-                  if (!ok) {
-                    toast.error(serial.error ?? "No se pudo conectar al carro.");
-                  }
-                }
-              }}
-              className="mt-3 w-full rounded-xl border border-accent/60 px-4 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/10"
-            >
-              {serial.connected ? "Desconectar carro" : "Conectar carro (USB)"}
-            </button>
+            <div className="mt-4 space-y-3">
+              {/* Aviso de navegador incompatible */}
+              {!serial.supported && (
+                <div className="flex items-start gap-2 rounded-xl border border-destructive/50 bg-destructive/10 p-3 text-xs text-destructive">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    Tu navegador no es compatible con la Web Serial API. Abre la
+                    app en Google Chrome o Microsoft Edge de escritorio para
+                    conectar el Arduino por USB.
+                  </span>
+                </div>
+              )}
+
+              {/* Botón principal de conexión USB */}
+              <button
+                onClick={handleConnect}
+                disabled={!serial.supported}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-base font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  serial.connected
+                    ? "border border-destructive/60 text-destructive hover:bg-destructive/10"
+                    : "bg-accent text-accent-foreground glow-primary hover:brightness-110 active:scale-[0.99]"
+                }`}
+              >
+                {serial.connected ? (
+                  <>
+                    <Unplug className="h-5 w-5" />
+                    Desconectar Arduino
+                  </>
+                ) : (
+                  <>
+                    <Usb className="h-5 w-5" />
+                    Conectar Arduino (USB)
+                  </>
+                )}
+              </button>
+
+              {/* Error de conexión */}
+              {serial.error && (
+                <p className="flex items-center gap-1.5 text-xs text-destructive">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  {serial.error}
+                </p>
+              )}
+
+              {/* Monitor serie en tiempo real */}
+              <div className="rounded-xl border border-border bg-background/60 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Terminal className="h-3.5 w-3.5" />
+                    Datos del Arduino (en vivo)
+                  </span>
+                  <button
+                    onClick={serial.clearIncoming}
+                    className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground transition hover:text-foreground"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Limpiar
+                  </button>
+                </div>
+                <div className="h-28 overflow-y-auto rounded-lg bg-black/40 p-2 font-mono text-xs text-primary">
+                  {serial.incoming.length === 0 ? (
+                    <span className="text-muted-foreground">
+                      {serial.connected
+                        ? "Esperando datos del Arduino…"
+                        : "Conecta el Arduino para ver los datos entrantes."}
+                    </span>
+                  ) : (
+                    serial.incoming.map((line, i) => (
+                      <div key={i} className="whitespace-pre-wrap break-words">
+                        <span className="text-muted-foreground">›</span> {line}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           )}
         </div>
+
 
         <footer className="pb-6 text-center text-xs text-muted-foreground">
           Gira el carro arrastrando · pantalla LED tipo QAPASS · 360°
