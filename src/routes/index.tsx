@@ -122,6 +122,17 @@ function Index() {
     // car has disappeared; nothing else needed
   }
 
+  async function handleConnect() {
+    if (serial.connected) {
+      await serial.disconnect();
+      toast("Arduino desconectado.");
+      return;
+    }
+    const ok = await serial.connect();
+    if (ok) toast.success("Arduino conectado por USB 🔌");
+    else toast.error(serial.error ?? "No se pudo conectar al Arduino.");
+  }
+
   return (
     <main className="min-h-screen bg-stage">
       <Toaster position="top-center" />
